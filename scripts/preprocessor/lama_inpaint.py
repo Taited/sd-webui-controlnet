@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from ..supported_preprocessor import Preprocessor, PreprocessorParameter
-from ..utils import resize_image_with_pad
+from ..utils import resize_image_with_pad, visualize_inpaint_mask
 
 
 class PreprocessorLamaInpaint(Preprocessor):
@@ -12,6 +12,8 @@ class PreprocessorLamaInpaint(Preprocessor):
         self.returns_image = True
         self.model = None
         self.slider_resolution = PreprocessorParameter(visible=False)
+        self.accepts_mask = True
+        self.requires_mask = True
 
     def __call__(
         self,
@@ -24,6 +26,7 @@ class PreprocessorLamaInpaint(Preprocessor):
     ):
         img = input_image
         H, W, C = img.shape
+        assert C == 4, "No mask is provided!"
         raw_color = img[:, :, 0:3].copy()
         raw_mask = img[:, :, 3:4].copy()
 
@@ -37,8 +40,6 @@ class PreprocessorLamaInpaint(Preprocessor):
             self.model = LamaInpainting()
         # applied auto inversion
         prd_color = self.model(img_res)
-        self.model.unload_model()
-
         prd_color = remove_pad(prd_color)
         prd_color = cv2.resize(prd_color, (W, H))
 
@@ -49,7 +50,13 @@ class PreprocessorLamaInpaint(Preprocessor):
         fin_color = fin_color.clip(0, 255).astype(np.uint8)
 
         result = np.concatenate([fin_color, raw_mask], axis=2)
-        return result
+        return Preprocessor.Result(
+            value=result,
+            display_images=[
+                result[:, :, :3],
+                visualize_inpaint_mask(result),
+            ],
+        )
 
 
 Preprocessor.add_supported_preprocessor(PreprocessorLamaInpaint())

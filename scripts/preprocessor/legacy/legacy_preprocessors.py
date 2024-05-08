@@ -45,6 +45,8 @@ class LegacyPreprocessor(Preprocessor):
         self.sorting_priority = legacy_dict["priority"]
         self.tags = legacy_dict["tags"]
         self.returns_image = legacy_dict.get("returns_image", True)
+        self.accepts_mask = legacy_dict.get("accepts_mask", False)
+        self.requires_mask = legacy_dict.get("requires_mask", False)
 
         if legacy_dict.get("use_soft_projection_in_hr_fix", False):
             self.use_soft_projection_in_hr_fix = True
@@ -79,10 +81,19 @@ class LegacyPreprocessor(Preprocessor):
                 **legacy_dict["slider_3"], visible=True
             )
 
+        self.active_with_model = False
+
+    def unload(self):
+        if self.active_with_model:
+            self.unload_function()
+            self.active_with_model = False
+            return True
+        return False
+
     def __call__(
         self,
         input_image,
-        resolution,
+        resolution=512,
         slider_1=None,
         slider_2=None,
         slider_3=None,
@@ -91,18 +102,14 @@ class LegacyPreprocessor(Preprocessor):
         # Legacy Preprocessors does not have slider 3
         del slider_3
 
-        if self.managed_model is not None:
-            assert self.unload_function is not None
-
         result, is_image = self.call_function(
             img=input_image, res=resolution, thr_a=slider_1, thr_b=slider_2, **kwargs
         )
+        if self.managed_model is not None:
+            self.active_with_model = True
 
-        if is_image and "inpaint" not in self.name:
+        if is_image:
             result = HWC3(result)
-
-        if self.unload_function is not None:
-            self.unload_function()
 
         return result
 

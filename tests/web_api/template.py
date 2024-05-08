@@ -73,8 +73,11 @@ def read_image_dir(
 girl_img = read_image(resource_dir / "1girl.png")
 mask_img = read_image(resource_dir / "mask.png")
 mask_small_img = read_image(resource_dir / "mask_small.png")
+mask_left = read_image(resource_dir / "mask_left.png")
+mask_right = read_image(resource_dir / "mask_right.png")
 portrait_imgs = read_image_dir(resource_dir / "portrait")
 realistic_girl_face_img = portrait_imgs[0]
+living_room_img = read_image(resource_dir / "living_room.webp")
 
 
 general_negative_prompt = """
@@ -292,15 +295,15 @@ def get_model(model_name: str) -> str:
 
 
 default_unit = {
-    "control_mode": 0,
+    "control_mode": "Balanced",
     "enabled": True,
     "guidance_end": 1,
     "guidance_start": 0,
     "pixel_perfect": True,
     "processor_res": 512,
-    "resize_mode": 1,
-    "threshold_a": 64,
-    "threshold_b": 64,
+    "resize_mode": "Crop and Resize",
+    "threshold_a": -1,
+    "threshold_b": -1,
     "weight": 1,
     "module": "canny",
     "model": get_model("sd15_canny"),

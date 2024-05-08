@@ -1,3 +1,5 @@
+from .pulid import *
+from .inpaint import *
 from .lama_inpaint import *
 from .ip_adapter_auto import *
 from .normal_dsine import *
